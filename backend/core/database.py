@@ -32,8 +32,8 @@ else:
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
     engine_kwargs["pool_pre_ping"] = True
-    # SSL required for cloud databases (Supabase, Neon, etc.)
-    engine_kwargs["connect_args"] = {"ssl": "require"}
+    # SSL via URL parameter for asyncpg (sslmode=require works in URL params)
+    # No connect_args SSL — handled via URL query parameter
 
 # ── Async Engine ─────────────────────────────────────────────────────────────
 
