@@ -1,0 +1,16 @@
+fastapi>=0.110,<1
+uvicorn[standard]
+sqlalchemy[asyncio]>=2.0,<3
+# asyncpg does not build on Windows — use aiosqlite for dev
+# asyncpg>=0.29,<1
+python-jose[cryptography]
+bcrypt>=5,<6
+pydantic>=2,<3
+pydantic-settings>=2,<3
+email-validator>=2,<3
+stripe
+python-multipart
+alembic>=1.13,<2
+redis
+aiosqlite>=0.19,<1
+httpx>=0.27,<1
