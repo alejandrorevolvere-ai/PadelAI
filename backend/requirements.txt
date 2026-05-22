@@ -1,8 +1,8 @@
 fastapi>=0.110,<1
 uvicorn[standard]
 sqlalchemy[asyncio]>=2.0,<3
-# asyncpg does not build on Windows — use aiosqlite for dev
-# asyncpg>=0.29,<1
+# asyncpg for PostgreSQL (Supabase / production)
+asyncpg>=0.29,<1
 python-jose[cryptography]
 bcrypt>=5,<6
 pydantic>=2,<3
