@@ -24,7 +24,7 @@ from models.base import Base
 # ── Detect driver ───────────────────────────────────────────────────────────
 
 _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-_is_pooler = "pooler.supabase" in settings.DATABASE_URL
+_is_pooler = "pooler.supabase" in settings.DATABASE_URL or ":6543" in settings.DATABASE_URL
 
 engine_kwargs: dict = {}
 if _is_sqlite:
@@ -43,8 +43,8 @@ else:
     # SSL for cloud databases (Supabase direct, Neon, etc.)
     _ssl_ctx = ssl.create_default_context()
     _ssl_ctx.check_hostname = False
-    _ssl_ctx.verify_mode = ssl.CERT_NONE
-    engine_kwargs["connect_args"] = {"ssl": _ssl_ctx}
+    # SSL for Supabase (cloud databases)
+    engine_kwargs["connect_args"] = {"ssl": True, "prepared_statement_cache_size": 0}
 
 # ── Async Engine ─────────────────────────────────────────────────────────────
 
