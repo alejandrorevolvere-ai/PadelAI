@@ -126,20 +126,11 @@ async def health() -> HealthResponse:
 
     # ── Database check ────────────────────────────────────────────────────
     try:
-        import asyncpg
-        import ssl as _ssl
-        db_url = settings.DATABASE_URL
-        pg_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-        pg_url_clean = pg_url.split("?")[0]
-        _ctx = _ssl.create_default_context()
-        _ctx.check_hostname = False
-        _ctx.verify_mode = _ssl.CERT_NONE
-        conn = await asyncpg.connect(pg_url_clean, ssl=_ctx, timeout=10)
-        await conn.execute("SELECT 1")
-        await conn.close()
+        async with async_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
         resp.db_status = "connected"
     except Exception as e:  # noqa: BLE001
-        resp.db_status = f"disconnected: {type(e).__name__}"
+        resp.db_status = f"disconnected: {type(e).__name__}: {str(e)[:120]}"
         resp.status = "degraded"
 
     # ── Redis check ──────────────────────────────────────────────────────

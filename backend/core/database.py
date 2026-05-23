@@ -22,15 +22,6 @@ from core.config import settings
 from models.base import Base
 
 
-# ── Helper: SSL context that accepts self-signed certs ────────────────────────
-
-def _no_verify_ssl() -> ssl.SSLContext:
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    return ctx
-
-
 # ── Detect driver / pooler ────────────────────────────────────────────────────
 
 _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
@@ -44,8 +35,17 @@ if _is_sqlite:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 
 elif _is_pooler:
-    # Supabase PgBouncer (port 6543): SSL with self-signed cert acceptance
-    engine_kwargs["connect_args"] = {"ssl": _no_verify_ssl()}
+    # Supabase PgBouncer (port 6543):
+    # - SSL required (Supabase uses self-signed certs on pooler)
+    # - statement_cache_size=0 because PgBouncer uses transaction pooling
+    #   and prepared statements don't persist across transactions
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    engine_kwargs["connect_args"] = {
+        "ssl": ctx,
+        "statement_cache_size": 0,
+    }
     engine_kwargs["pool_pre_ping"] = True
 
 else:
@@ -53,7 +53,7 @@ else:
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
     engine_kwargs["pool_pre_ping"] = True
-    engine_kwargs["connect_args"] = {"ssl": _no_verify_ssl()}
+    engine_kwargs["connect_args"] = {"ssl": True}
 
 # ── Async Engine ───────────────────────────────────────────────────────────────
 
