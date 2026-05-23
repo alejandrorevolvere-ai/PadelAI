@@ -130,7 +130,9 @@ async def health() -> HealthResponse:
             await conn.execute(text("SELECT 1"))
         resp.db_status = "connected"
     except Exception as e:  # noqa: BLE001
-        resp.db_status = f"disconnected: {type(e).__name__}: {str(e)[:100]}"
+        import logging
+        logging.error(f"DB health check failed: {type(e).__name__}: {e}")
+        resp.db_status = f"disconnected: {type(e).__name__}"
         resp.status = "degraded"
 
     # ── Redis check ──────────────────────────────────────────────────────
