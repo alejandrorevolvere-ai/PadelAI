@@ -127,14 +127,14 @@ async def health() -> HealthResponse:
     # ── Database check ────────────────────────────────────────────────────
     try:
         import asyncpg
-        import re
-        # Parse the DATABASE_URL manually for a raw asyncpg test
+        import ssl as _ssl
         db_url = settings.DATABASE_URL
-        # Strip the +asyncpg prefix
         pg_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-        # Remove query params for the raw connection
         pg_url_clean = pg_url.split("?")[0]
-        conn = await asyncpg.connect(pg_url_clean, ssl=True, timeout=10)
+        _ctx = _ssl.create_default_context()
+        _ctx.check_hostname = False
+        _ctx.verify_mode = _ssl.CERT_NONE
+        conn = await asyncpg.connect(pg_url_clean, ssl=_ctx, timeout=10)
         await conn.execute("SELECT 1")
         await conn.close()
         resp.db_status = "connected"
