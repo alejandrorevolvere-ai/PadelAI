@@ -129,8 +129,8 @@ async def health() -> HealthResponse:
         async with async_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         resp.db_status = "connected"
-    except Exception:  # noqa: BLE001
-        resp.db_status = "disconnected"
+    except Exception as e:  # noqa: BLE001
+        resp.db_status = f"disconnected: {type(e).__name__}: {str(e)[:100]}"
         resp.status = "degraded"
 
     # ── Redis check ──────────────────────────────────────────────────────
