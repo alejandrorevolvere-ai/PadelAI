@@ -32,8 +32,8 @@ else:
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
     engine_kwargs["pool_pre_ping"] = True
-    # SSL + PgBouncer via connect_args for asyncpg
-    engine_kwargs["connect_args"] = {"ssl": "require", "prepared_statement_cache_size": 0}
+    # SSL for cloud DBs
+    engine_kwargs["connect_args"] = {"ssl": True}
 
 # ── Async Engine ─────────────────────────────────────────────────────────────
 
