@@ -126,12 +126,19 @@ async def health() -> HealthResponse:
 
     # ── Database check ────────────────────────────────────────────────────
     try:
-        async with async_engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+        import asyncpg
+        import re
+        # Parse the DATABASE_URL manually for a raw asyncpg test
+        db_url = settings.DATABASE_URL
+        # Strip the +asyncpg prefix
+        pg_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+        # Remove query params for the raw connection
+        pg_url_clean = pg_url.split("?")[0]
+        conn = await asyncpg.connect(pg_url_clean, ssl=True, timeout=10)
+        await conn.execute("SELECT 1")
+        await conn.close()
         resp.db_status = "connected"
     except Exception as e:  # noqa: BLE001
-        import logging
-        logging.error(f"DB health check failed: {type(e).__name__}: {e}")
         resp.db_status = f"disconnected: {type(e).__name__}"
         resp.status = "degraded"
 
