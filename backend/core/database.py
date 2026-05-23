@@ -1,7 +1,7 @@
 """Async database engine, session factory, and FastAPI dependency.
 
 Supports both PostgreSQL (asyncpg) and SQLite (aiosqlite) for development.
-Selects the appropriate connect arguments based on the DATABASE_URL scheme.
+Detects Supabase PgBouncer (port 6543) and adjusts pool settings accordingly.
 
 NOTE: ``Base`` is imported from ``models.base`` to ensure all model
 registrations use the same DeclarativeBase instance.
@@ -24,27 +24,27 @@ from models.base import Base
 # ── Detect driver ───────────────────────────────────────────────────────────
 
 _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-_is_pooler = "pooler.supabase" in settings.DATABASE_URL or ":6543" in settings.DATABASE_URL
+_is_pooler = ":6543" in settings.DATABASE_URL
+
+# ── Engine kwargs ────────────────────────────────────────────────────────────
 
 engine_kwargs: dict = {}
+
 if _is_sqlite:
-    # SQLite doesn't support pools and needs check_same_thread=False
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 elif _is_pooler:
-    # Supabase PgBouncer pooler: disable prepared statements, handle SSL via URL
-    engine_kwargs["pool_size"] = 0  # PgBouncer handles pooling
-    engine_kwargs["max_overflow"] = 0
-    engine_kwargs["pool_pre_ping"] = True
-    # SSL handled via URL query param (ssl=allow for self-signed certs)
+    # Supabase PgBouncer: no connection pooling in the app, only SSL
+    engine_kwargs["pool_size"] = 0
+    engine_kwargs["connect_args"] = {"ssl": True}
 else:
+    # Standard PostgreSQL (direct connection, no PgBouncer)
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
     engine_kwargs["pool_pre_ping"] = True
-    # SSL for cloud databases (Supabase direct, Neon, etc.)
     _ssl_ctx = ssl.create_default_context()
     _ssl_ctx.check_hostname = False
-    # SSL for Supabase (cloud databases)
-    engine_kwargs["connect_args"] = {"ssl": True, "prepared_statement_cache_size": 0}
+    _ssl_ctx.verify_mode = ssl.CERT_NONE
+    engine_kwargs["connect_args"] = {"ssl": _ssl_ctx}
 
 # ── Async Engine ─────────────────────────────────────────────────────────────
 
